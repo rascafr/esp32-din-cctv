@@ -4,7 +4,7 @@
 
 ![](mechanical/mounted-sample.jpg)
 
-DIN-rail compatible WiFi security camera with additional features (doorbell detection, magnetic / reed switch door & PIR sensor...) that sends you alerts on Telegram if someone unauthorised breaks into your house.
+50€ DIN-rail compatible WiFi security camera with additional features (doorbell detection, magnetic / reed switch door & PIR sensor...) that sends you alerts on Telegram if someone unauthorised breaks into your house.
 
 ## Embedded software
 
@@ -12,7 +12,7 @@ Project is based on the Arduino framework (C++), with the *PlatformIO Visual Stu
 
 ## Build it
 
-I wanted to keep it simple, hence it's using the well known **AI-Thinker ESP32-CAM board**.
+I wanted to keep it simple, hence it's using the well known **AI-Thinker ESP32-CAM board**. I'm using the 120°  wide lens, so my entrancy / hallway can be seen in one sight.
 
 The module is designed to be integrated into your electric panel, fixed on a standard DIN rail for direct wall mounting.
 
