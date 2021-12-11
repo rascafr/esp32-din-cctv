@@ -12,7 +12,7 @@ Project is based on the Arduino framework (C++), with the *PlatformIO Visual Stu
 
 ## Build it
 
-I wanted to keep it simple, hence it's using the well known **AI-Thinker ESP32-CAM board**. I'm using the 120°  wide lens, so my entrancy / hallway can be seen in one sight.
+I wanted to keep it simple, hence it's using the well known **AI-Thinker ESP32-CAM board**. I'm using the 160°  wide lens, so my entrancy / hallway can be seen in one sight.
 
 The module is designed to be integrated into your electric panel, fixed on a standard DIN rail for direct wall mounting.
 
@@ -24,4 +24,13 @@ The module is powered thanks to a DIN-rail AC/DC 15W 5VDC converter, **MeanWell 
 
 You might / *need* to add a 10A circuit breaker, connected upstream of the 5V power supply.
 
-`[Schematic incoming...]`
+![](doc/electric-panel-schematic.png)
+
+## Bill of materials
+
+- **Core + camera:** `AI-Thinker ESP32-CAM OV2640 160°` [[link]](https://fr.aliexpress.com/item/1005002808966055.html)
+- **5V 15W DC supply:** `MeanWell HDR-15-5` [[link]](https://www.amazon.fr/gp/product/B06XWQSJGW/)
+- **Door Reed-switch:** `Ref?` [[link]](https://fr.aliexpress.com/item/1005003496413403.html)
+- **PIR sensor:** `HW-740` [[link]](https://fr.aliexpress.com/item/32964200244.html)
+- **Alarm piezo buzzer:** `95db, DC 3-24V` [[link]](https://fr.aliexpress.com/item/1005001489820983.html)
+- **Circuit breaker:** `Lexman 16A / C` [[link]](https://www.leroymerlin.fr/produits/electricite-domotique/tableau-electrique-et-disjoncteur/disjoncteur-coupe-circuit-et-interrupteur-differentiel/disjoncteur-coupe-circuit-et-bloc-para-foudre/disjoncteur-phase-neutre-lexman-16-a-69839973.html)
