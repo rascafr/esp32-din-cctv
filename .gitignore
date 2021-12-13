@@ -10,3 +10,4 @@ lib
 test
 *.test
 *.txt
+src/secrets.h

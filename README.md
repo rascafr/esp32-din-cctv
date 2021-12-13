@@ -10,6 +10,12 @@
 
 Project is based on the Arduino framework (C++), with the *PlatformIO Visual Studio Code* add-on.
 
+## Uploading code
+
+You either can flash the updates directly with a USB to TTL module, or directly upload updates over the air (OTA) using `espota` (already installed with PlatformIO).
+
+Ensure you did the setup part by updating the `src/secrets.h` file and replacing WiFi SSID, password and Telegram API token with your values.
+
 ## Build it
 
 I wanted to keep it simple, hence it's using the well known **AI-Thinker ESP32-CAM board**. I'm using the 160°  wide lens, so my entrancy / hallway can be seen in one sight.
