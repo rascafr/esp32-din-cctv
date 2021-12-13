@@ -56,7 +56,7 @@ void setup() {
 
   ota_init_enable();
 
-  sprintf(tmp, "✅ ESP32 boot OK at `%s`, revision `%s`", ctime(&now), GIT_TAG);
+  sprintf(tmp, "✅ ESP32 boot OK at `%s`\nRevision `%s`", ctime(&now), GIT_TAG);
   bot.sendMessage(CHAT_ID, tmp, "Markdown");
 }
 
