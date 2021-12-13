@@ -4,3 +4,9 @@
 .vscode/launch.json
 .vscode/ipch
 .DS_Store
+*.sh
+include
+lib
+test
+*.test
+*.txt
