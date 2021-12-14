@@ -1,10 +1,10 @@
 # ESP32 DIN CCTV
 
-**🚧 Work in progress / more details / code / stuff coming soon 🚧**
+**🚧 Work in progress / more details / code / features coming soon 🚧**
 
 ![](mechanical/mounted-sample.jpg)
 
-50€ DIN-rail compatible WiFi security camera with additional features (doorbell detection, magnetic / reed switch door & PIR sensor...) that sends you alerts on Telegram if someone unauthorised breaks into your house.
+40€ DIN-rail compatible WiFi security camera with additional features (doorbell detection, magnetic / reed switch door & PIR sensor...) that sends you alerts on Telegram if someone unauthorised breaks into your house.
 
 ## Embedded software
 
@@ -34,9 +34,9 @@ You might / *need* to add a 10A circuit breaker, connected upstream of the 5V po
 
 ## Bill of materials
 
-- **Core + camera:** `AI-Thinker ESP32-CAM OV2640 160°` [[link]](https://fr.aliexpress.com/item/1005002808966055.html)
-- **5V 15W DC supply:** `MeanWell HDR-15-5` [[link]](https://www.amazon.fr/gp/product/B06XWQSJGW/)
-- **Door Reed-switch:** `Ref?` [[link]](https://fr.aliexpress.com/item/1005003496413403.html)
-- **PIR sensor:** `HW-740` [[link]](https://fr.aliexpress.com/item/32964200244.html)
-- **Alarm piezo buzzer:** `95db, DC 3-24V` [[link]](https://fr.aliexpress.com/item/1005001489820983.html)
-- **Circuit breaker:** `Lexman 16A / C` [[link]](https://www.leroymerlin.fr/produits/electricite-domotique/tableau-electrique-et-disjoncteur/disjoncteur-coupe-circuit-et-interrupteur-differentiel/disjoncteur-coupe-circuit-et-bloc-para-foudre/disjoncteur-phase-neutre-lexman-16-a-69839973.html)
+- **Core + camera:** `AI-Thinker ESP32-CAM OV2640 160°` [[link]](https://fr.aliexpress.com/item/1005002808966055.html) ***(13€)***
+- **5V 15W DC supply:** `MeanWell HDR-15-5` [[link]](https://www.amazon.fr/gp/product/B06XWQSJGW/) ***(16€)***
+- **Door Reed-switch:** `Ref?` [[link]](https://fr.aliexpress.com/item/1005003496413403.html) ***(2€ / unit)***
+- **PIR sensor:** `HW-740` [[link]](https://fr.aliexpress.com/item/32964200244.html) ***(1€)***
+- **Alarm piezo buzzer:** `95db, DC 3-24V` [[link]](https://fr.aliexpress.com/item/1005001489820983.html) ***(1€)***
+- **Circuit breaker:** `Lexman 16A / C` [[link]](https://www.leroymerlin.fr/produits/electricite-domotique/tableau-electrique-et-disjoncteur/disjoncteur-coupe-circuit-et-interrupteur-differentiel/disjoncteur-coupe-circuit-et-bloc-para-foudre/disjoncteur-phase-neutre-lexman-16-a-69839973.html) ***(7€)***
