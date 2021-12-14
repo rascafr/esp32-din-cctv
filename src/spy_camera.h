@@ -8,7 +8,7 @@
 
 // Preferences / module config
 #define TARGET_DEFINITION   FRAMESIZE_XGA
-#define TARGET_JPEG_QUALITY (8)
+#define TARGET_JPEG_QUALITY (10)
 #define TARGET_FRAME_COUNT  (2)
 
 /*

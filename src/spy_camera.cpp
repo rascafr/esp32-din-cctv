@@ -49,9 +49,9 @@ bool spy_camera_init(void) {
   // Drop down frame size for higher initial frame rate
   sensor_t * s = esp_camera_sensor_get();
   s->set_framesize(s, TARGET_DEFINITION);  // UXGA|SXGA|XGA|SVGA|VGA|CIF|QVGA|HQVGA|QQVGA
-  s->set_special_effect(s, 2); // 0 to 6 (0 - No Effect, 1 - Negative, 2 - Grayscale, 3 - Red Tint, 4 - Green Tint, 5 - Blue Tint, 6 - Sepia)
-  s->set_reg(s,0xff,0xff,0x01);//banksel
-  s->set_reg(s,0x11,0xff,01);//frame rate
+  s->set_special_effect(s, 0); // 0 to 6 (0 - No Effect, 1 - Negative, 2 - Grayscale, 3 - Red Tint, 4 - Green Tint, 5 - Blue Tint, 6 - Sepia)
+  //s->set_reg(s,0xff,0xff,0x01);//banksel
+  //s->set_reg(s,0x11,0xff,01);//frame rate
 
   delay(1200);
   return true;
