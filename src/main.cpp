@@ -72,19 +72,20 @@ void loop() {
 
       // ISR handle events
       door_sensor_task_handle();
-
       dated_event_t isr_event = door_sensor_get_event();
-      if (isr_event.type != EVENT_NONE) {
-        /*time_t now = utils_get_time();
-        char * str_time = ctime(&now);*/
-        if (isr_event.type == EVENT_DOOR_OPENED) {
+
+      switch (isr_event.type) {
+
+        case EVENT_DOOR_OPENED:
           sprintf(tmp, "⚠️🚪 Door opened!\nTime: `%s`Id = `%d`", ctime(&isr_event.time), isr_event.id);
           bot.sendMessage(CHAT_ID, tmp, "Markdown");
           sendPhotoTelegram(true);
-        } else if (isr_event.type == EVENT_DOOR_CLOSED) {
+          break;
+
+        case EVENT_DOOR_CLOSED:
           sprintf(tmp, "✅🚪 Door closed.\nTime: `%s`Id = `%d`", ctime(&isr_event.time), isr_event.id);
           bot.sendMessage(CHAT_ID, tmp, "Markdown");
-        }
+          break;
       }
 
       // Telegram update messages task
