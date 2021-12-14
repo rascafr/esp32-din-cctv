@@ -33,7 +33,6 @@ uint32_t last_check_telegram_data;
  */
 void sendPhotoTelegram(bool withFlash);
 int handleTelegramMessages(int pending);
-void IRAM_ATTR ISR_DoorSensor_Opened(void * context);
 
 void setup() {
 
@@ -86,6 +85,9 @@ void loop() {
           sprintf(tmp, "✅🚪 Door closed.\nTime: `%s`Id = `%d`", ctime(&isr_event.time), isr_event.id);
           bot.sendMessage(CHAT_ID, tmp, "Markdown");
           break;
+
+        default:
+          break;
       }
 
       // Telegram update messages task
@@ -115,7 +117,7 @@ int handleTelegramMessages(int pending) {
     else if (text == "/status") {
       time_t now = utils_get_time();
       sprintf(tmp,
-        "Uptime: `%llu seconds`\nIP: `%s`\nRSSI: `%d dBm`\nTime: `%s`",
+        "Uptime: `%lu seconds`\nIP: `%s`\nRSSI: `%d dBm`\nTime: `%s`",
         millis()/1000, WiFi.localIP().toString().c_str(), WiFi.RSSI(), ctime(&now)
       );
       bot.sendMessage(CHAT_ID, tmp, "Markdown");
