@@ -37,7 +37,7 @@ void push_event_to_queue(sensors_events_e new_event) {
   }
   events_list[0] = { .type = new_event, .time = utils_get_time(), .id = __id++ };
   if (count_pending_events < MAX_EVENTS_COUNT) count_pending_events++;
-  last_queued_event = new_event;
+  // last_queued_event = new_event; // WIP, se comments below in door_sensor_task_handle
 }
 
 dated_event_t * pop_event_from_queue(void) {
