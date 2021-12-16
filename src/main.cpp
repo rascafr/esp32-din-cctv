@@ -41,7 +41,7 @@ void setup() {
 
   pinMode(DBG_RED_LED_PIN, OUTPUT);
   spy_camera_init();
-  door_sensor_init();
+  door_init();
   utils_write_hostname(hostname);
 
   WiFi.setHostname(hostname);
@@ -70,19 +70,24 @@ void loop() {
     if (!ota_is_updating()) {
 
       // ISR handle events
-      door_sensor_task_handle();
-      dated_event_t isr_event = door_sensor_get_event();
+      door_task_handle();
+      dated_event_t isr_event = door_get_event();
 
       switch (isr_event.type) {
 
         case EVENT_DOOR_OPENED:
-          sprintf(tmp, "⚠️🚪 Door opened!\nTime: `%s`Id = `%d`", ctime(&isr_event.time), isr_event.id);
+          sprintf(tmp, "⚠️🚪 Door opened!\nTime: `%s`eventId = `%d`", ctime(&isr_event.time), isr_event.id);
           bot.sendMessage(CHAT_ID, tmp, "Markdown");
           sendPhotoTelegram(true);
           break;
 
         case EVENT_DOOR_CLOSED:
-          sprintf(tmp, "✅🚪 Door closed.\nTime: `%s`Id = `%d`", ctime(&isr_event.time), isr_event.id);
+          sprintf(tmp, "✅🚪 Door closed.\nTime: `%s`eventId = `%d`", ctime(&isr_event.time), isr_event.id);
+          bot.sendMessage(CHAT_ID, tmp, "Markdown");
+          break;
+
+        case EVENT_DOORBELL_PRESSED:
+          sprintf(tmp, "🔔🚪 Doorbell triggered!\nTime: `%s`eventId = `%d`", ctime(&isr_event.time), isr_event.id);
           bot.sendMessage(CHAT_ID, tmp, "Markdown");
           break;
 
@@ -119,6 +124,14 @@ int handleTelegramMessages(int pending) {
       sprintf(tmp,
         "Uptime: `%lu seconds`\nIP: `%s`\nRSSI: `%d dBm`\nTime: `%s`",
         millis()/1000, WiFi.localIP().toString().c_str(), WiFi.RSSI(), ctime(&now)
+      );
+      bot.sendMessage(CHAT_ID, tmp, "Markdown");
+    }
+    else if (text == "/sensors") {
+      sprintf(tmp,
+        "🚪 `%s`, 🔔 `%s`",
+        door_sensor_read() == HIGH ? "OPENED" : "CLOSED",
+        door_bell_read() == LOW ? "PRESSED" : "RELEASED"
       );
       bot.sendMessage(CHAT_ID, tmp, "Markdown");
     }
