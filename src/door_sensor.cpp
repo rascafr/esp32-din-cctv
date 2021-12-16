@@ -5,7 +5,7 @@
  * Mutexes
  */
 portMUX_TYPE doorSensorMux = portMUX_INITIALIZER_UNLOCKED;
-portMUX_TYPE PIRSensorMux = portMUX_INITIALIZER_UNLOCKED;
+portMUX_TYPE doorbellMux = portMUX_INITIALIZER_UNLOCKED;
 
 /*
  * ISR variables 
@@ -13,6 +13,8 @@ portMUX_TYPE PIRSensorMux = portMUX_INITIALIZER_UNLOCKED;
 volatile uint32_t doorSensorLastISR = 0;
 volatile bool doorSensorLastState = true;
 volatile bool doorSensorISRTriggered = false;
+volatile uint32_t doorbellLastISR = 0;
+volatile bool doorbellISRTriggered = false;
 
 // private variables
 bool saveTriggered;
@@ -25,9 +27,8 @@ uint32_t saveDebounceTimeout;
 #define MAX_EVENTS_COUNT 10
 dated_event_t events_list[MAX_EVENTS_COUNT];
 dated_event_t * ptr_curr_event = NULL;
-uint32_t count_pending_events = 0; // cannot be > MAX_EVENTS_COUNT
-//sensors_events_e last_queued_event = EVENT_NONE;
-static uint8_t __id = 0;
+uint32_t count_pending_events = 0;  // cannot be > MAX_EVENTS_COUNT
+static uint8_t __id = 0;            // for debugging purpose, event ID
 
 void push_event_to_queue(sensors_events_e new_event) {
   if (count_pending_events > 0) {
@@ -37,7 +38,6 @@ void push_event_to_queue(sensors_events_e new_event) {
   }
   events_list[0] = { .type = new_event, .time = utils_get_time(), .id = __id++ };
   if (count_pending_events < MAX_EVENTS_COUNT) count_pending_events++;
-  // last_queued_event = new_event; // WIP, se comments below in door_sensor_task_handle
 }
 
 dated_event_t * pop_event_from_queue(void) {
@@ -50,21 +50,33 @@ dated_event_t * pop_event_from_queue(void) {
 /*
  * Private local methods
  */
-void IRAM_ATTR ISR_DoorSensor_Opened(void * context);
+void IRAM_ATTR ISR_door_sensor_events(void * context);
+void IRAM_ATTR ISR_door_bell_events(void * context);
 
-esp_err_t door_sensor_init(void) {
+esp_err_t door_init(void) {
   pinMode(DOOR_SENSOR_PIN, INPUT_PULLUP);
-  esp_err_t e1 = gpio_isr_handler_add((gpio_num_t)DOOR_SENSOR_PIN, ISR_DoorSensor_Opened, (void *) DOOR_SENSOR_PIN);
+  pinMode(DOORBELL_PIN, INPUT_PULLUP);
+  esp_err_t e1 = gpio_isr_handler_add((gpio_num_t)DOOR_SENSOR_PIN, ISR_door_sensor_events, (void *) DOOR_SENSOR_PIN);
   esp_err_t e2 = gpio_set_intr_type((gpio_num_t)DOOR_SENSOR_PIN, GPIO_INTR_ANYEDGE);
-  return e1 > 0 ? e1 : e2;
+  esp_err_t e3 = gpio_isr_handler_add((gpio_num_t)DOORBELL_PIN, ISR_door_bell_events, (void *) DOORBELL_PIN);
+  esp_err_t e4 = gpio_set_intr_type((gpio_num_t)DOORBELL_PIN, GPIO_INTR_NEGEDGE);
+  return !e1 && !e2 && !e3 && !e4;
 }
 
 uint8_t door_sensor_read(void) {
   return digitalRead(DOOR_SENSOR_PIN);
 }
 
-void door_sensor_task_handle(void) {
+uint8_t door_bell_read(void) {
+  return digitalRead(DOORBELL_PIN);
+}
 
+void door_task_handle(void) {
+
+  /*
+   * Door reed switch true interrupt / debounce detection
+   * both states are detected (opened, closed)
+   */
   portENTER_CRITICAL_ISR(&doorSensorMux);
   saveTriggered = doorSensorISRTriggered;
   saveDebounceTimeout = doorSensorLastISR;
@@ -83,32 +95,46 @@ void door_sensor_task_handle(void) {
     portEXIT_CRITICAL_ISR(&doorSensorMux);
   }
 
-  // improve behavior in case we missed an ISR
-  // read current door state,
-  // if LOW and last event is not opened, add new to queue
-  // if HIGH and last event is not closed, add new to queue
-  // same thing for PIR sensor
-  /*if (doorSensorCurrentState == HIGH && last_queued_event != EVENT_DOOR_CLOSED) {
-    push_event_to_queue(EVENT_DOOR_CLOSED);
-  } else if (doorSensorCurrentState == LOW && last_queued_event != EVENT_DOOR_OPENED) {
-    push_event_to_queue(EVENT_DOOR_OPENED);
-  }*/
+  /*
+   * Doorbell incoming AC / 50Hz square signal
+   * only pressed state (signal detected) is managed here
+   * (who needs to know when the doorbell button has been released?)
+   */
+  portENTER_CRITICAL_ISR(&doorbellMux);
+  saveTriggered = doorbellISRTriggered;
+  portEXIT_CRITICAL_ISR(&doorbellMux);
+  if (saveTriggered) {
+    push_event_to_queue(EVENT_DOORBELL_PRESSED);
+  }
+  portENTER_CRITICAL_ISR(&doorbellMux);
+  doorbellISRTriggered = false;
+  portEXIT_CRITICAL_ISR(&doorbellMux);
 }
 
-uint32_t door_sensor_get_pending_events_count(void) {
+uint32_t door_count_pending_events(void) {
   return count_pending_events;
 }
 
-dated_event_t door_sensor_get_event(void) {
+dated_event_t door_get_event(void) {
   dated_event_t * out = pop_event_from_queue();
-  if (out) return { .type = out->type, .time = out->time, .id = out->id};
+  if (out) return { .type = out->type, .time = out->time, .id = out->id };
   else return { .type = EVENT_NONE};
 }
 
-void IRAM_ATTR ISR_DoorSensor_Opened(void * context) {
+void IRAM_ATTR ISR_door_sensor_events(void * context) {
   portENTER_CRITICAL_ISR(&doorSensorMux);
   doorSensorLastState = door_sensor_read();
   doorSensorLastISR = millis();
   doorSensorISRTriggered = true;
   portEXIT_CRITICAL_ISR(&doorSensorMux);
+}
+
+void IRAM_ATTR ISR_door_bell_events(void * context) {
+  portENTER_CRITICAL_ISR(&doorbellMux);
+  // check flag here, since the doorbell signal is 50Hz squared, don't disable interrupt
+  if (!doorbellISRTriggered && millis() - doorbellLastISR > DOORBELL_DEBOUNCE_MS) {
+    doorbellISRTriggered = true;
+    doorbellLastISR = millis();
+  }
+  portEXIT_CRITICAL_ISR(&doorbellMux);
 }
