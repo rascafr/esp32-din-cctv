@@ -14,6 +14,7 @@ volatile uint32_t doorSensorLastISR = 0;
 volatile bool doorSensorLastState = true;
 volatile bool doorSensorISRTriggered = false;
 volatile uint32_t doorbellLastISR = 0;
+volatile uint8_t doorbellSignalEdges = 0;
 volatile bool doorbellISRTriggered = false;
 
 // private variables
@@ -108,6 +109,7 @@ void door_task_handle(void) {
   }
   portENTER_CRITICAL_ISR(&doorbellMux);
   doorbellISRTriggered = false;
+  doorbellSignalEdges = 0; // reset 50Hz pulse counter
   portEXIT_CRITICAL_ISR(&doorbellMux);
 }
 
@@ -131,8 +133,9 @@ void IRAM_ATTR ISR_door_sensor_events(void * context) {
 
 void IRAM_ATTR ISR_door_bell_events(void * context) {
   portENTER_CRITICAL_ISR(&doorbellMux);
+  doorbellSignalEdges++; // count falling edges
   // check flag here, since the doorbell signal is 50Hz squared, don't disable interrupt
-  if (!doorbellISRTriggered && millis() - doorbellLastISR > DOORBELL_DEBOUNCE_MS) {
+  if (!doorbellISRTriggered && doorbellSignalEdges > DOORBELL_MIN_50HZ_PULSES && millis() - doorbellLastISR > DOORBELL_DEBOUNCE_MS) {
     doorbellISRTriggered = true;
     doorbellLastISR = millis();
   }

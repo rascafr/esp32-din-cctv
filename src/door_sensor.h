@@ -3,8 +3,10 @@
 
 #include <Arduino.h>
 
-#define DOOR_SENSOR_PIN   (12)
+#define DOOR_SENSOR_PIN   (15)
 #define DOORBELL_PIN      (13)
+
+#define DOORBELL_MIN_50HZ_PULSES  (5)       // 5x falling edges = 100ms
 #define DOOR_SENSOR_DEBOUNCE_MS   (150)
 #define DOORBELL_DEBOUNCE_MS      (2000)    // someone has to be really mad
                                             // to ring more than once in 2s
