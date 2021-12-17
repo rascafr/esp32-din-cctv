@@ -8,6 +8,7 @@
 #include "secrets.h"
 #include "door_sensor.h"
 #include "telegram_helper.h"
+#include "beep.h"
 
 /*
  * Local general definitions 
@@ -42,6 +43,7 @@ void setup() {
   pinMode(DBG_RED_LED_PIN, OUTPUT);
   spy_camera_init();
   door_init();
+  beep_init();
   utils_write_hostname(hostname);
 
   WiFi.setHostname(hostname);
@@ -54,6 +56,7 @@ void setup() {
   utils_init_time(&now);
   ota_init_enable();
   bot.waitForResponse = 500;
+  beep_sequence(2, BEEP_FREQ_HIGH); // welcome shy beep
   sprintf(tmp, "✅ ESP32 boot OK at `%s`\nRevision `%s`", ctime(&now), GIT_TAG);
   bot.sendMessage(CHAT_ID, tmp, "Markdown");
 }
@@ -76,17 +79,20 @@ void loop() {
       switch (isr_event.type) {
 
         case EVENT_DOOR_OPENED:
+          beep_sequence(10, BEEP_FREQ_MED);
           sprintf(tmp, "⚠️🚪 Door opened!\nTime: `%s`eventId = `%d`", ctime(&isr_event.time), isr_event.id);
           bot.sendMessage(CHAT_ID, tmp, "Markdown");
           sendPhotoTelegram(true);
           break;
 
         case EVENT_DOOR_CLOSED:
+          beep_sequence(2, BEEP_FREQ_LOW);
           sprintf(tmp, "✅🚪 Door closed.\nTime: `%s`eventId = `%d`", ctime(&isr_event.time), isr_event.id);
           bot.sendMessage(CHAT_ID, tmp, "Markdown");
           break;
 
         case EVENT_DOORBELL_PRESSED:
+          beep_sequence(30, BEEP_FREQ_HIGH);
           sprintf(tmp, "🔔🚪 Doorbell triggered!\nTime: `%s`eventId = `%d`", ctime(&isr_event.time), isr_event.id);
           bot.sendMessage(CHAT_ID, tmp, "Markdown");
           break;
@@ -122,8 +128,8 @@ int handleTelegramMessages(int pending) {
     else if (text == "/status") {
       time_t now = utils_get_time();
       sprintf(tmp,
-        "Uptime: `%lu seconds`\nIP: `%s`\nRSSI: `%d dBm`\nTime: `%s`",
-        millis()/1000, WiFi.localIP().toString().c_str(), WiFi.RSSI(), ctime(&now)
+        "Rst: `%d`\nUptime: `%lu seconds`\nIP: `%s`\nRSSI: `%d dBm`\nTime: `%s`",
+        esp_reset_reason(), millis()/1000, WiFi.localIP().toString().c_str(), WiFi.RSSI(), ctime(&now)
       );
       bot.sendMessage(CHAT_ID, tmp, "Markdown");
     }
@@ -134,6 +140,15 @@ int handleTelegramMessages(int pending) {
         door_bell_read() == LOW ? "PRESSED" : "RELEASED"
       );
       bot.sendMessage(CHAT_ID, tmp, "Markdown");
+    }
+    else if (text == "/beep") {
+      beep_sequence(1, BEEP_FREQ_MED);
+    }
+    else if (text == "/mute") {
+      beep_mute();
+    }
+    else if (text == "/unmute") {
+      beep_unmute();
     }
   }
 
