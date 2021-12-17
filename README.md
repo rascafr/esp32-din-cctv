@@ -28,7 +28,9 @@ The module is designed to be integrated into your electric panel, fixed on a sta
 
 The module is powered thanks to a DIN-rail AC/DC 15W 5VDC converter, **MeanWell HDR-15-5**.
 
-You might / *need* to add a 10A circuit breaker, connected upstream of the 5V power supply.
+You might / *need* to add a circuit breaker, connected upstream of the 5V power supply (*see note below)*
+
+> The one I used is 16A / C-type curve, which is way overkill, since the `HDR-15-5` only draws 250mA from main power (230V). **However**, due to its internal capacitors, this will reach 45A for a few dozen ms when powered up, hence my 16A circuit breaker. It'd be better to use a 2A model with a D-type curve - which I couldn't find here in my local store (*refer to: https://www.meanwell.com/Upload/PDF/HDR-15/HDR-15-SPEC.PDF*)
 
 ![](doc/electric-panel-schematic.png)
 
