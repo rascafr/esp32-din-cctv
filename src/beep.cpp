@@ -47,3 +47,7 @@ void beep_mute(void) {
 void beep_unmute(void) {
   is_muted = false;
 }
+
+bool beep_is_muted(void) {
+  return is_muted;
+}

@@ -17,5 +17,6 @@ void beep_init(void);
 void beep_sequence(uint8_t count, uint64_t pres);
 void beep_mute(void);
 void beep_unmute(void);
+bool beep_is_muted(void);
 
 #endif
