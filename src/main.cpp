@@ -9,6 +9,7 @@
 #include "door_sensor.h"
 #include "telegram_helper.h"
 #include "beep.h"
+#include "commands.h"
 
 /*
  * Local general definitions 
@@ -26,8 +27,9 @@
 WiFiClientSecure secured_client;
 UniversalTelegramBot bot(BOT_TOKEN, secured_client);
 char hostname[23]; // ESP32-CAMERA-xxxxxxxxx
-char tmp[100];
+char tmp[150];
 uint32_t last_check_telegram_data;
+bool surveillance_enabled = true; // enabled at boot, TODO store in flash / preferences
 
 /*
  * Private local functions prototypes
@@ -57,7 +59,7 @@ void setup() {
   ota_init_enable();
   bot.waitForResponse = 500;
   beep_sequence(2, BEEP_FREQ_HIGH); // welcome shy beep
-  sprintf(tmp, "✅ ESP32 boot OK at `%s`\nRevision `%s`", ctime(&now), GIT_TAG);
+  sprintf(tmp, "🟢 ESP32 boot OK at `%s`\nRevision `%s`", ctime(&now), GIT_TAG);
   bot.sendMessage(CHAT_ID, tmp, "Markdown");
 }
 
@@ -76,11 +78,16 @@ void loop() {
       door_task_handle();
       dated_event_t isr_event = door_get_event();
 
+      // override alarm commands if disabled
+      if (!surveillance_enabled && (isr_event.type >= EVENT_DOOR_OPENED && isr_event.type <= EVENT_HUMAIN_DISAPPEARED)) {
+        isr_event.type = EVENT_NONE;
+      }
+
       switch (isr_event.type) {
 
         case EVENT_DOOR_OPENED:
           beep_sequence(10, BEEP_FREQ_MED);
-          sprintf(tmp, "⚠️🚪 Door opened!\nTime: `%s`eventId = `%d`", ctime(&isr_event.time), isr_event.id);
+          sprintf(tmp, "🚨🚪 Door opened!\nTime: `%s`eventId = `%d`", ctime(&isr_event.time), isr_event.id);
           bot.sendMessage(CHAT_ID, tmp, "Markdown");
           sendPhotoTelegram(true);
           break;
@@ -118,22 +125,24 @@ int handleTelegramMessages(int pending) {
     String text = bot.messages[i].text;
     pending = bot.getUpdates(bot.last_message_received + 1);
 
-    if (text == "/reboot") {
+    // TODO implement struct with void * for pattern-command like
+    if (text == COMMANDS[CMD_REBOOT]) {
       bot.sendMessage(CHAT_ID, "ESP32 rebooting now...", "Markdown");
       ESP.restart();
     }
-    else if (text == "/capture") {
+    else if (text == COMMANDS[CMD_CAPTURE]) {
       sendPhotoTelegram(true);
     }
-    else if (text == "/status") {
-      time_t now = utils_get_time();
+    else if (text == COMMANDS[CMD_STATUS]) {
       sprintf(tmp,
-        "Rst: `%d`\nUptime: `%lu seconds`\nIP: `%s`\nRSSI: `%d dBm`\nTime: `%s`",
-        esp_reset_reason(), millis()/1000, WiFi.localIP().toString().c_str(), WiFi.RSSI(), ctime(&now)
+        "Surveillance: `%s`\nSound: `%s`\nTotal events triggered: `%d`",
+        surveillance_enabled ? "ON ✅" : "OFF ❌",
+        beep_is_muted() ? "MUTED 🔇" : "UNMUTED 🔊",
+        door_count_total_events()
       );
       bot.sendMessage(CHAT_ID, tmp, "Markdown");
     }
-    else if (text == "/sensors") {
+    else if (text == COMMANDS[CMD_SENSORS]) {
       sprintf(tmp,
         "🚪 `%s`, 🔔 `%s`",
         door_sensor_read() == HIGH ? "OPENED" : "CLOSED",
@@ -141,14 +150,41 @@ int handleTelegramMessages(int pending) {
       );
       bot.sendMessage(CHAT_ID, tmp, "Markdown");
     }
-    else if (text == "/beep") {
+    else if (text == COMMANDS[CMD_BEEP]) {
       beep_sequence(1, BEEP_FREQ_MED);
     }
-    else if (text == "/mute") {
+    else if (text == COMMANDS[CMD_MUTE]) {
       beep_mute();
+      bot.sendMessage(CHAT_ID, "I'm now quiet 🤐", "Markdown");
     }
-    else if (text == "/unmute") {
+    else if (text == COMMANDS[CMD_UNMUTE]) {
       beep_unmute();
+      bot.sendMessage(CHAT_ID, "Unmuted, thanks 😎", "Markdown");
+    }
+    else if (text == COMMANDS[CMD_ENABLE]) {
+      surveillance_enabled = true;
+      bot.sendMessage(CHAT_ID, "Surveillance enabled 👮", "Markdown");
+    }
+    else if (text == COMMANDS[CMD_DISABLE]) {
+      surveillance_enabled = false;
+      bot.sendMessage(CHAT_ID, "Surveillance's now offline 😴", "Markdown");
+    }
+    else if (text == COMMANDS[CMD_DEBUG]) {
+      time_t now = utils_get_time();
+      sprintf(tmp,
+        "Reset reason: `%d`\nUptime: `%lu seconds`\nIP: `%s`\nRSSI: `%d dBm`\nTime: `%s`",
+        esp_reset_reason(), millis()/1000, WiFi.localIP().toString().c_str(), WiFi.RSSI(), ctime(&now)
+      );
+      bot.sendMessage(CHAT_ID, tmp, "Markdown");
+    }
+    else if (text.length() > 0) { // seems like after capture, empty string is sent back?
+      bot.sendMessage(CHAT_ID, "Sorry, I didn't quite get that 🤔\nAvailable commands:", "Markdown");
+      tmp[0] = 0x0;
+      for (uint8_t i=0;i<NB_COMMANDS;i++) {
+        if (i > 0) strcat(tmp, "\n");
+        strcat(tmp, COMMANDS[i]);
+      }
+      bot.sendMessage(CHAT_ID, tmp, "Markdown");
     }
   }
 
