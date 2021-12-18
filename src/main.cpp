@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <UniversalTelegramBot.h>
+#include <Preferences.h>
 #include "spy_camera.h"
 #include "ota.h"
 #include "utils.h"
@@ -10,6 +11,7 @@
 #include "telegram_helper.h"
 #include "beep.h"
 #include "commands.h"
+#include "app_preferences.h"
 
 /*
  * Local general definitions 
@@ -29,7 +31,8 @@ UniversalTelegramBot bot(BOT_TOKEN, secured_client);
 char hostname[23]; // ESP32-CAMERA-xxxxxxxxx
 char tmp[150];
 uint32_t last_check_telegram_data;
-bool surveillance_enabled = true; // enabled at boot, TODO store in flash / preferences
+bool surveillance_enabled = true;
+Preferences nvs;
 
 /*
  * Private local functions prototypes
@@ -41,6 +44,7 @@ void setup() {
 
   Serial.begin(115200);
   Serial.println();
+  nvs.begin(APP_PREF_ID, false /* R/W */); 
 
   pinMode(DBG_RED_LED_PIN, OUTPUT);
   spy_camera_init();
@@ -48,6 +52,11 @@ void setup() {
   beep_init();
   utils_write_hostname(hostname);
 
+  // apply saved preferences values
+  if (nvs.getBool(PREF_KEY_MUTED, false)) beep_mute();
+  if (!nvs.getBool(PREF_KEY_ENABLED, true)) surveillance_enabled = false;
+
+  // TODO WiFi.onEvent(WiFiStationDisconnected, SYSTEM_EVENT_STA_DISCONNECTED);
   WiFi.setHostname(hostname);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT);
@@ -156,18 +165,22 @@ int handleTelegramMessages(int pending) {
     else if (text == COMMANDS[CMD_MUTE]) {
       beep_mute();
       bot.sendMessage(CHAT_ID, "I'm now quiet 🤐", "Markdown");
+      nvs.putBool(PREF_KEY_MUTED, true);
     }
     else if (text == COMMANDS[CMD_UNMUTE]) {
       beep_unmute();
       bot.sendMessage(CHAT_ID, "Unmuted, thanks 😎", "Markdown");
+      nvs.putBool(PREF_KEY_MUTED, false);
     }
     else if (text == COMMANDS[CMD_ENABLE]) {
       surveillance_enabled = true;
       bot.sendMessage(CHAT_ID, "Surveillance enabled 👮", "Markdown");
+      nvs.putBool(PREF_KEY_ENABLED, surveillance_enabled);
     }
     else if (text == COMMANDS[CMD_DISABLE]) {
       surveillance_enabled = false;
       bot.sendMessage(CHAT_ID, "Surveillance's now offline 😴", "Markdown");
+      nvs.putBool(PREF_KEY_ENABLED, surveillance_enabled);
     }
     else if (text == COMMANDS[CMD_DEBUG]) {
       time_t now = utils_get_time();
