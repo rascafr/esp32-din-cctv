@@ -18,7 +18,7 @@ typedef enum {
     EVENT_HUMAIN_DETECTED,
     EVENT_HUMAIN_DISAPPEARED,
     EVENT_DOORBELL_PRESSED,
-    EVENT_DOORBELL_RELEASED
+    EVENT_DOORBELL_RELEASED     /* RFU? Not used atm */
 } sensors_events_e;
 
 typedef struct {
@@ -33,5 +33,6 @@ uint8_t door_bell_read(void);
 void door_task_handle(void);
 dated_event_t door_get_event(void);
 uint32_t door_count_pending_events(void);
+uint8_t door_count_total_events(void);
 
 #endif

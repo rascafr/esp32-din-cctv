@@ -117,6 +117,10 @@ uint32_t door_count_pending_events(void) {
   return count_pending_events;
 }
 
+uint8_t door_count_total_events(void) {
+  return __id;
+}
+
 dated_event_t door_get_event(void) {
   dated_event_t * out = pop_event_from_queue();
   if (out) return { .type = out->type, .time = out->time, .id = out->id };
